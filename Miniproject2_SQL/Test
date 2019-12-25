@@ -1,0 +1,109 @@
+1.
+SELECT name
+FROM Facilities
+WHERE membercost > 0
+LIMIT 0 , 30
+
+2.
+SELECT COUNT( name )
+FROM Facilities
+WHERE membercost > 0
+
+3.
+SELECT facid, name, membercost, monthlymaintenance
+FROM Facilities
+WHERE membercost < ( 0.2 * monthlymaintenance )
+LIMIT 0 , 30
+
+4.
+SELECT *
+FROM Facilities
+WHERE facID
+IN ( 1, 5 )
+LIMIT 0 , 30
+
+5.
+SELECT 
+name,
+monthlymaintenance,
+CASE WHEN monthlymaintenance > 100 THEN 'Expensive'
+ELSE 'Cheap' END 
+AS fac_category
+FROM Facilities
+
+6.
+
+7.
+SELECT Facilities.name AS facility,
+concat(Members.firstname,' ',Members.surname) AS  name
+FROM Bookings 
+LEFT JOIN Facilities ON Bookings.facid = Facilities.facid
+LEFT JOIN Members ON Bookings.memid = Members.memid
+WHERE Facilities.name LIKE '%Tennis Court%'
+GROUP BY Bookings.facid,Bookings.memid
+ORDER BY name
+
+8.
+SELECT 
+
+Facilities.name AS fac_name,
+Concat(Members.firstname,' ',Members.surname) AS name,
+CASE 
+	WHEN Members.memid = '0' 
+		THEN (Bookings.slots * Facilities.guestcost) 
+	ELSE (Bookings.slots * Facilities.membercost)
+END AS fac_cost
+
+FROM Bookings 
+LEFT JOIN Facilities ON Bookings.facid = Facilities.facid
+LEFT JOIN Members ON Bookings.memid = Members.memid
+WHERE Bookings.starttime LIKE '2012-09-14%'
+AND
+(CASE 
+	WHEN Members.memid = '0' 
+		THEN (Bookings.slots * Facilities.guestcost) 
+	ELSE (Bookings.slots * Facilities.membercost)
+END) > 30
+
+GROUP BY Bookings.facid,Bookings.memid
+ORDER BY fac_cost DESC
+
+
+9.
+
+10.
+SELECT fac,
+fac_name,
+SUM(cost) AS revenue 
+
+FROM
+(	SELECT 
+	
+ 	Bookings.facid As fac,
+	Facilities.name As fac_name, 
+ 
+	CASE WHEN Bookings.memid = '0' THEN 'Guest'
+	ELSE 'Mem' END AS Type,
+ 
+	CASE WHEN Bookings.memid = '0' THEN COUNT(*) * Facilities.guestcost * Bookings.slots
+	ELSE COUNT(*) * Facilities.membercost * Bookings.slots END AS cost
+
+	FROM Bookings 
+ 
+	LEFT JOIN Facilities ON Bookings.facid = Facilities.facid
+	LEFT JOIN Members ON Bookings.memid = Members.memid
+
+	GROUP BY Bookings.facid,Type
+ 
+) mem_guest_grouping
+
+GROUP BY fac
+
+ORDER BY revenue 
+
+
+
+
+
+
+

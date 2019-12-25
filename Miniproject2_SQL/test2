@@ -1,0 +1,26 @@
+SELECT fac,
+fac_name,
+SUM(cost) AS revenue 
+
+FROM
+(	SELECT 
+	
+ 	Bookings.facid As fac,
+	Facilities.name As fac_name, 
+ 
+	CASE WHEN Bookings.memid = '0' THEN 'Guest'
+	ELSE 'Mem' END AS Type,
+ 
+	CASE WHEN Bookings.memid = '0' THEN COUNT(*) * Facilities.guestcost * Bookings.slots
+	ELSE COUNT(*) * Facilities.membercost * Bookings.slots END AS cost
+
+	FROM Bookings 
+ 
+	LEFT JOIN Facilities ON Bookings.facid = Facilities.facid
+	LEFT JOIN Members ON Bookings.memid = Members.memid
+
+	GROUP BY Bookings.facid,Type
+ 
+) mem_guest_grouping
+
+GROUP BY fac
