@@ -156,59 +156,65 @@ ORDER BY fac_cost DESC
 
 /* Q9: This time, produce the same result as in Q8, but using a subquery. */
 
-SELECT subquery.bookid,
-Facilities.name AS fac_name,
-Concat(Members.firstname,' ',Members.surname) AS name,
 
-CASE 
-	WHEN Members.memid = '0' 
-		THEN (subquery.slots * Facilities.guestcost) 
-	ELSE (subquery.slots * Facilities.membercost)
-END AS fac_cost
+SELECT subquery.* 
+FROM
+	(
+	
+		SELECT 
 
-FROM 
-(
-    SELECT * FROM Bookings WHERE starttime LIKE '2012-09-14%'
+		Bookings.bookid, 
+		Facilities.name AS fac_name,
+		Concat(Members.firstname,' ',Members.surname) AS name,
+
+		CASE 
+			WHEN Members.memid = '0' 
+				THEN (Bookings.slots * Facilities.guestcost) 
+		ELSE (Bookings.slots * Facilities.membercost)
+		END AS fac_cost
+
+		FROM Bookings 
+
+		LEFT JOIN Facilities ON Bookings.facid = Facilities.facid
+		LEFT JOIN Members ON Bookings.memid = Members.memid
+        
+        WHERE Bookings.starttime LIKE '2012-09-14%'
     
-) subquery
+    )subquery
+	
 
-LEFT JOIN Facilities ON subquery.facid = Facilities.facid
-LEFT JOIN Members ON subquery.memid = Members.memid
+	Having subquery.fac_cost > 30
 
-Having fac_cost > 30
+	ORDER BY subquery.fac_cost DESC
 
-ORDER BY fac_cost DESC
 
 
 /* Q10: Produce a list of facilities with a total revenue less than 1000.
 The output of facility name and total revenue, sorted by revenue. Remember
 that there's a different cost for guests and members! */
 
-SELECT fac,
-fac_name,
-SUM(cost) AS revenue 
-
+SELECT
+subquery.fac_name,
+SUM(cost) As revenue
 FROM
-(	SELECT 
+
+	(SELECT 
 	
+	Bookings.bookid As id,
  	Bookings.facid As fac,
 	Facilities.name As fac_name, 
  
-	CASE WHEN Bookings.memid = '0' THEN 'Guest'
-	ELSE 'Mem' END AS Type,
- 
-	CASE WHEN Bookings.memid = '0' THEN COUNT(*) * Facilities.guestcost * Bookings.slots
-	ELSE COUNT(*) * Facilities.membercost * Bookings.slots END AS cost
+	CASE WHEN Bookings.memid = '0' THEN Facilities.guestcost * Bookings.slots
+	ELSE Facilities.membercost * Bookings.slots END AS cost
 
 	FROM Bookings 
  
 	LEFT JOIN Facilities ON Bookings.facid = Facilities.facid
 	LEFT JOIN Members ON Bookings.memid = Members.memid
 
-	GROUP BY Bookings.facid,Type
- 
-) mem_guest_grouping
+	)subquery
 
-GROUP BY fac
+GROUP BY subquery.fac
+HAVING revenue > 1000
+ORDER BY revenue DESC
 
-ORDER BY revenue 
